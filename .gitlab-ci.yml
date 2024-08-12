@@ -1,0 +1,49 @@
+default:
+  tags:
+    - gcp
+
+stages: # List of stages for jobs, and their order of execution
+  - terraform
+  - controller
+
+terraform:
+  stage: terraform
+  trigger:
+    include:
+      - local: terraform/.gitlab-ci.yml
+    strategy: depend
+  only:
+    changes:
+      - "terraform/**/*"  # Only run if changes occur in the /terraform directory or its subdirectories
+
+include: terraform/.gitlab-ci-init.yml
+configenv-job:
+  extends: .get_tf_outputs
+  stage: terraform
+  script:
+    - echo "DOCKER_REPO_REGISTRY=$(terraform output -raw repository_registry)" >> build.env
+    - echo "DOCKER_REPO_PREFIX=$(terraform output -raw repository_image_prefix)" >> build.env
+    - echo "GCP_PROJECT_ID=$(terraform output -raw project_id)" >> build.env
+    - echo "CONTROLLER_SERVICE_NAME=$(terraform output -raw controller_service_name)" >> build.env
+    - echo "CONTROLLER_SERVICE_REGION=$(terraform output -raw controller_service_region)" >> build.env
+    - pwd
+    - cat build.env
+
+controller:
+  stage: controller
+  trigger:
+    include:
+      - local: controller/.gitlab-ci.yml
+    strategy: depend
+  needs:
+    - job: configenv-job
+      artifacts: true
+  variables:
+    DOCKER_REPO_REGISTRY: $DOCKER_REPO_REGISTRY
+    DOCKER_REPO_PREFIX: $DOCKER_REPO_PREFIX
+    GCP_PROJECT_ID: $GCP_PROJECT_ID
+    SERVICE_NAME: $CONTROLLER_SERVICE_NAME
+    SERVICE_REGION: $CONTROLLER_SERVICE_REGION
+  only:
+    changes:
+      - "controller/**/*"  # Only run if changes occur in the /controller directory or its subdirectories

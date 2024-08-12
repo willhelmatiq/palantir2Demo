@@ -1,0 +1,61 @@
+# This is mostly generic build file for a Cloud Run service, it should be enough to update global vars and provide dependant vars
+
+image: eclipse-temurin:21
+variables:
+  # Build native image?
+  BUILD_NATIVE: "false"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  BUILD_DIR: "controller"
+  DOCKER_IMAGE_NAME: "controller"
+before_script:
+  - cd "$CI_PROJECT_DIR/$BUILD_DIR"
+  - GRADLE_USER_HOME="$(pwd)/.gradle"
+  - export GRADLE_USER_HOME
+
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  tags: [ "gcp" ]
+  script:
+    - ./gradlew --build-cache assemble dockerfile
+  cache:
+    - key: "build-$CI_COMMIT_REF_NAME"
+      paths:
+        - "$BUILD_DIR/build"
+    - key: "gradle-$CI_COMMIT_REF_NAME"
+      paths:
+        - "$BUILD_DIR/.gradle"
+      policy: push
+
+cache:
+  - key: "build-$CI_COMMIT_REF_NAME"
+    paths:
+      - "$BUILD_DIR/build"
+    policy: pull
+  - key: "gradle-$CI_COMMIT_REF_NAME"
+    paths:
+      - "$BUILD_DIR/.gradle"
+    policy: pull
+
+test:
+  stage: test
+  tags: [ "gcp" ]
+  script: ./gradlew -Dmicronaut.environments=test check
+
+deploy:
+  image: google/cloud-sdk:latest
+  stage: deploy
+  tags: [ "gcp" ]
+  # ToDo: this script is collapsed in the output which is not good for debugging
+  script:
+    - gcloud auth configure-docker $DOCKER_REPO_REGISTRY
+    - cd build/docker/main
+    - docker build -t "$DOCKER_REPO_PREFIX/$DOCKER_IMAGE_NAME:latest" .
+    - gcloud config set auth/impersonate_service_account $TF_VAR_terraform_service_account
+    - docker push "$DOCKER_REPO_PREFIX/$DOCKER_IMAGE_NAME:latest"
+    - gcloud config set auth/impersonate_service_account $TF_VAR_terraform_service_account
+    - gcloud run deploy $SERVICE_NAME --image="$DOCKER_REPO_PREFIX/$DOCKER_IMAGE_NAME:latest" --project=$GCP_PROJECT_ID --region=$SERVICE_REGION

@@ -1,0 +1,39 @@
+include: terraform/.gitlab-ci-init.yml
+image:
+  name: hashicorp/terraform:1.9.3
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+stages:
+  - validate
+  - plan
+  - apply
+
+Validate:
+  stage: validate
+  tags: [ "gcp", "terraform" ]
+  script:
+    - !reference [ .setup-tf, script ]
+    - terraform validate
+    - terraform fmt -check=true
+  only:
+    - branches
+
+Plan:
+  stage: plan
+  tags: [ "gcp", "terraform" ]
+  script:
+    - !reference [ .setup-tf, script ]
+    - terraform plan
+  only:
+    - dev
+
+Apply:
+  stage: apply
+  tags: [ "gcp", "terraform" ]
+  script:
+    - !reference [ .setup-tf, script ]
+    - terraform apply -auto-approve
+  when: manual
+  only:
+    - dev

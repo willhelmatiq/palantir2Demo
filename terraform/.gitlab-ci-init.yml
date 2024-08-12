@@ -1,0 +1,27 @@
+.setup-tf:
+  image:
+    name: hashicorp/terraform:1.9.3
+    entrypoint:
+      - '/usr/bin/env'
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  script:
+    - cd "$CI_PROJECT_DIR/terraform"
+    - echo "environment=\"$CI_COMMIT_REF_NAME\"" > terraform.tfvars
+    - echo "terraform_service_account=\"$TF_VAR_terraform_service_account\"" >> terraform.tfvars
+    - echo "org_id=$TF_VAR_org_id" >> terraform.tfvars
+    - echo "billing_account=\"$TF_VAR_billing_account\"" >> terraform.tfvars
+    - echo "terraform_ci_service_account=\"$TF_VAR_terraform_ci_runner_service_account\"" >> terraform.tfvars
+    - echo "terraform_ci_project=\"$TF_VAR_cicd_project\"" >> terraform.tfvars
+    - terraform --version
+    - terraform init -reconfigure -backend-config="bucket=$TF_VAR_state_bucket" -backend-config="prefix=terraform/devteam/$CI_PROJECT_NAME/$CI_COMMIT_REF_NAME"
+    - terraform fmt terraform.tfvars
+
+.get_tf_outputs:
+  image: !reference [ .setup-tf, image ]
+  before_script:
+    - !reference [ .setup-tf, script ]
+    - echo "SOME_EXAMPLE_TERRAFORM_VARIABLE=true" > build.env
+  artifacts:
+    reports:
+      dotenv: terraform/build.env
+
