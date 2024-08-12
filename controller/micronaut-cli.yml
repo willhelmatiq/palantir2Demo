@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: palantir
+testFramework: spock
+sourceLanguage: java
+buildTool: gradle
+features: [annotation-api, app-name, data, data-jdbc, flyway, gcp-cloud-trace, gcp-pubsub, graalvm, gradle, http-client-test, java, java-application, jdbc-hikari, logback, management, micrometer, micrometer-annotation, micrometer-stackdriver, micronaut-aot, micronaut-build, micronaut-http-validation, netty-server, postgres, readme, serialization-jackson, shade, spock, test-resources, yaml, yaml-build]
