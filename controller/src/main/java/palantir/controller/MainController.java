@@ -5,20 +5,30 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.extern.slf4j.Slf4j;
+import palantir.controller.entity.WatchedChannel;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller()
 @Validated
 @Slf4j
 public class MainController {
     private final ChannelsWatcher channelsWatcher;
+    private final YouTubeApiService youTubeApiService;
+    private final ChannelsWatcher channelsWatcherService;
 
-    public MainController(ChannelsWatcher channelsWatcher) {
+    public MainController(ChannelsWatcher channelsWatcher, YouTubeApiService youTubeApiService, ChannelsWatcher channelsWatcherService) {
         this.channelsWatcher = channelsWatcher;
+        this.youTubeApiService = youTubeApiService;
+        this.channelsWatcherService = channelsWatcherService;
     }
 
     /**
@@ -121,5 +131,20 @@ public class MainController {
         return Map.of("channel_ids", channelIdsAdded,
                 "usernames", usernamesAdded,
                 "custom_urls", customUrlsAdded);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get("/watch_channel_of_user/{user}")
+    public HttpResponse<String> addChannelUserToWatch(@PathVariable @NotEmpty String user) {
+        log.info("Adding channel for user {} to watch list", user);
+        String channelId = youTubeApiService.getChannelIdByUsername(user).block();
+        List<WatchedChannel> watchedChannels = channelsWatcherService.getAllWatchedChannels();
+        Set<String> watchedChannelIds = watchedChannels.stream().map(WatchedChannel::channelId).collect(Collectors.toSet());
+        if (watchedChannelIds.contains(channelId)) {
+            log.info("Channel with ID {} for user {} is already being watched", channelId, user);
+            return HttpResponse.notModified();
+        }
+        channelsWatcherService.addChannelToWatchById(channelId);
+        return HttpResponse.ok();
     }
 }

@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import palantir.controller.entity.WatchedChannel;
 import palantir.controller.WatchedChannelRepository;
 
+import java.util.List;
+
 @Slf4j
 @Singleton
 public class ChannelsWatcher {
@@ -67,5 +69,9 @@ public class ChannelsWatcher {
             watchedChannelRepository.save(WatchedChannel.builder().customUrl(customUrl).build());
             return true;
         }
+    }
+
+    public List<WatchedChannel> getAllWatchedChannels(){
+        return watchedChannelRepository.findAll();
     }
 }
