@@ -1,5 +1,5 @@
 plugins {
-    id 'java'
+    id("groovy")
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("io.micronaut.application") version "4.2.1"
     id("io.micronaut.test-resources") version "4.2.1"
@@ -28,7 +28,7 @@ dependencies {
     implementation("io.micronaut.gcp:micronaut-gcp-pubsub")
     implementation("io.micronaut.gcp:micronaut-gcp-tracing")
     implementation("io.micronaut.micrometer:micronaut-micrometer-core")
-//    implementation("io.micronaut.micrometer:micronaut-micrometer-registry-stackdriver")
+    implementation("io.micronaut.micrometer:micronaut-micrometer-registry-stackdriver")
     implementation("io.micronaut.serde:micronaut-serde-jackson")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation("jakarta.annotation:jakarta.annotation-api")
@@ -46,12 +46,30 @@ dependencies {
     testImplementation("io.micronaut:micronaut-http-client")
     testImplementation("org.apache.groovy:groovy-sql")
     testImplementation("net.bytebuddy:byte-buddy:1.14.11")
+    testImplementation("org.objenesis:objenesis:3.2")
 }
 
-test {
-    useJUnitPlatform()
-}
 
 application {
     mainClass.set("palantir.controller.Application")
+}
+
+micronaut {
+    runtime("netty")
+    testRuntime("spock2")
+    processing {
+        incremental(true)
+        annotations("palantir.controller.*")
+    }
+    aot {
+        // Please review carefully the optimizations enabled below
+        // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+        optimizeServiceLoading = false
+        convertYamlToJava = false
+        precomputeOperations = true
+        cacheEnvironment = true
+        optimizeClassLoading = true
+        deduceEnvironment = true
+        optimizeNetty = true
+    }
 }
