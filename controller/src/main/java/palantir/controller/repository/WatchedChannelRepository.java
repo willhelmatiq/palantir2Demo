@@ -1,4 +1,4 @@
-package palantir.controller;
+package palantir.controller.repository;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;

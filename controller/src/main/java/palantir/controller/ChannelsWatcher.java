@@ -4,7 +4,7 @@ import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.extern.slf4j.Slf4j;
 import palantir.controller.entity.WatchedChannel;
-import palantir.controller.WatchedChannelRepository;
+import palantir.controller.repository.WatchedChannelRepository;
 
 import java.util.List;
 
