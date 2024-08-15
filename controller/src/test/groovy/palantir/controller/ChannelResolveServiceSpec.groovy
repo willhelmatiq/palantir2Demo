@@ -5,7 +5,7 @@ import io.micronaut.http.client.HttpClient
 import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import palantir.controller.repository.WatchedChannel
+import palantir.controller.entity.WatchedChannel
 import palantir.controller.repository.WatchedChannelRepository
 import reactor.core.publisher.Mono
 import spock.lang.Specification
