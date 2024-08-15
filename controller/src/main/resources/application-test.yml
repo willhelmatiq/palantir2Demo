@@ -1,0 +1,22 @@
+micronaut:
+  metrics:
+    export:
+      stackdriver:
+        enabled: false
+        projectId: ${STACKDRIVER_PROJECT_ID}
+        step: PT1M
+    enabled: false
+datasources:
+  default:
+    dialect: postgres
+flyway:
+  datasources:
+    default:
+      enabled: true
+netty:
+  default:
+    allocator:
+      max-order: 3
+functions:
+  update_handler: 'https://europe-west1-enduring-button-90012.cloudfunctions.net/updatehandler'
+  url: 'https://europe-west1-enduring-button-90012.cloudfunctions.net/getchannelvideos'
